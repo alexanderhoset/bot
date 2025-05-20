@@ -31,7 +31,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               sha,
-              context: 'style-guide-check',
+              context: 'discrimination-check',
               state: 'pending',
               description: 'Waiting for answer...'
             };
