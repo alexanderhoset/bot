@@ -4,6 +4,11 @@ on:
   issue_comment:
     types: [created]
 
+permissions:
+  issues: write
+  pull-requests: write
+  statuses: write
+
 jobs:
   process-answer:
     if: github.event.issue.pull_request != null
@@ -26,7 +31,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               sha,
-              context: 'discrimination-check',
+              context: 'style-guide-check',
               state: 'pending',
               description: 'Waiting for answer...'
             };
