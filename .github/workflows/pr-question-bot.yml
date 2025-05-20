@@ -4,6 +4,9 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+permissions:
+  issues: write  # Needed to post a comment on the PR
+
 jobs:
   ask-question:
     runs-on: ubuntu-latest
