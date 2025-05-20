@@ -1,0 +1,22 @@
+name: PR Question Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  ask-question:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask a question on the PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const question = `## 🤖 Code Review Question\nDid you follow the style guide?\nReply with:\n- \`/answer yes\`\n- \`/answer no\``;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: question
+            });
