@@ -5,7 +5,9 @@ on:
     types: [opened, synchronize]
 
 permissions:
-  issues: write  # Needed to post a comment on the PR
+  issues: write
+  pull-requests: write
+  statuses: write
 
 jobs:
   ask-question:
