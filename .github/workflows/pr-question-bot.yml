@@ -17,7 +17,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const question = `## 🤖 Code Review Question\nDid you follow the style guide?\nReply with:\n- \`/answer yes\`\n- \`/answer no\``;
+            const question = `## 🤖 Code Review Question\nDid you follow the discrimination rules?\nReply with:\n- \`/answer yes\`\n- \`/answer no\``;
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
