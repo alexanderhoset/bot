@@ -1,16 +1,8 @@
 name: Process Answer
 
 on:
-  workflow_dispatch:
-    inputs:
-      command:
-        required: true
-      comment-id:
-        required: false
-      sender:
-        required: true
-      issue:
-        required: true
+  repository_dispatch:
+    types: [answer]
 
 jobs:
   set-status:
@@ -22,7 +14,7 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const issue_number = parseInt('${{ github.event.inputs.issue }}', 10);
+            const issue_number = parseInt('${{ github.event.client_payload.issue }}', 10);
             const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -34,6 +26,6 @@ jobs:
         uses: ouzi-dev/commit-status@v2
         with:
           sha: ${{ steps.pr.outputs.result }}
-          state: ${{ github.event.inputs.command == 'answer yes' && 'success' || 'failure' }}
+          state: ${{ github.event.client_payload.command == 'answer yes' && 'success' || 'failure' }}
           context: discrimination-check
-          description: ${{ github.event.inputs.command == 'answer yes' && 'Answered yes' || 'Answered no' }}
+          description: ${{ github.event.client_payload.command == 'answer yes' && 'Answered yes' || 'Answered no' }}
