@@ -33,10 +33,7 @@ jobs:
               pull_number: context.issue.number
             });
             return pr.data.head.sha;
-
-      - name: Show PR SHA
-        run: echo "SHA: ${{ steps.pr.outputs.result }}"
-
+            
       - name: Set commit status (success)
         if: ${{ github.event.comment.body == '/answer yes' }}
         uses: ouzi-dev/commit-status@v2
