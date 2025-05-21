@@ -1,0 +1,39 @@
+name: Process Answer
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        required: true
+      comment-id:
+        required: false
+      sender:
+        required: true
+      issue:
+        required: true
+
+jobs:
+  set-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR SHA
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const issue_number = parseInt('${{ github.event.inputs.issue }}', 10);
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: issue_number
+            });
+            return pr.data.head.sha;
+
+      - name: Set commit status
+        uses: ouzi-dev/commit-status@v2
+        with:
+          sha: ${{ steps.pr.outputs.result }}
+          state: ${{ github.event.inputs.command == 'answer yes' && 'success' || 'failure' }}
+          context: discrimination-check
+          description: ${{ github.event.inputs.command == 'answer yes' && 'Answered yes' || 'Answered no' }}
