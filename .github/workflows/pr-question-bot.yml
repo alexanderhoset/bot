@@ -1,27 +1,24 @@
-name: PR Question Bot
+name: Ask PR Question
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
 
 permissions:
-  issues: write
   pull-requests: write
-  statuses: write
 
 jobs:
-  ask-question:
+  post-question:
     runs-on: ubuntu-latest
     steps:
-      - name: Ask a question on the PR
-        uses: actions/github-script@v7
+      - name: Post question using add-pr-comment
+        uses: thollander/actions-comment-pull-request@v2
         with:
-          script: |
-            const question = `## 🤖 Code Review Question\nDid you follow the discrimination rules?\nReply with:\n- \`/answer yes\`\n- \`/answer no\``;
+          message: |
+            ## 🤖 Code Review Question
 
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: question
-            });
+            Did you follow the rules?
+
+            Please reply with:
+            - `/answer yes`
+            - `/answer no`
