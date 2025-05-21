@@ -1,0 +1,14 @@
+name: Test Issue Comment Trigger
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  show-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo info
+        run: |
+          echo "Triggered by comment: ${{ github.event.comment.body }}"
+          echo "Is PR? ${{ github.event.issue.pull_request != null }}"
