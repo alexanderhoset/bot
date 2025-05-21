@@ -11,8 +11,8 @@ permissions:
 
 jobs:
   process-answer:
-    if: ${{ github.event.issue.pull_request != null }}
     runs-on: ubuntu-latest
+    if: ${{ github.event.issue.pull_request != null }}
     steps:
       - name: Trigger only on `/answer` command
         uses: actions-cool/pull-request-comment-trigger@v1.2.0
@@ -20,10 +20,7 @@ jobs:
           trigger: '/answer'
           prefix_only: true
           reaction: true
-
-      - name: Debug comment body
-        run: echo "Comment body: ${{ github.event.comment.body }}"
-
+          
       - name: Get PR commit SHA
         id: pr
         uses: actions/github-script@v7
