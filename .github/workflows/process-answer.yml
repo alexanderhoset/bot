@@ -3,8 +3,6 @@ name: Process PR Answer
 on:
   issue_comment:
     types: [created]
-  pull_request:
-    types: [opened, synchronize, reopened, edited]
 
 permissions:
   contents: write
