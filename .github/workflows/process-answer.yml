@@ -1,49 +1,48 @@
-name: Process PR Answers
+name: Process PR Answer
 
 on:
   issue_comment:
     types: [created]
 
 permissions:
-  issues: write
+  contents: write
   pull-requests: write
   statuses: write
 
 jobs:
-  process-answer:
-    if: github.event.issue.pull_request != null
+  trigger-on-answer:
     runs-on: ubuntu-latest
+    if: github.event.issue.pull_request != null
     steps:
-      - name: Respond to comment command
+      - name: Check for valid answers
+        uses: actions-cool/pull-request-comment-trigger@v1.2.0
+        with:
+          trigger: '/answer'
+          prefix_only: true
+          reaction: true
+
+      - name: Set commit status based on answer
+        if: github.event.comment.body == '/answer yes' || github.event.comment.body == '/answer no'
         uses: actions/github-script@v7
         with:
           script: |
-            const comment = context.payload.comment.body.toLowerCase();
-            const pr = context.payload.issue.pull_request;
-
-            const sha = (await github.rest.pulls.get({
+            const comment = context.payload.comment.body.trim().toLowerCase();
+            const pull_number = context.issue.number;
+            const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.issue.number
-            })).data.head.sha;
+              pull_number
+            });
 
-            let status = {
+            const sha = pr.data.head.sha;
+
+            const status = {
               owner: context.repo.owner,
               repo: context.repo.repo,
               sha,
               context: 'discrimination-check',
-              state: 'pending',
-              description: 'Waiting for answer...'
+              state: comment === '/answer yes' ? 'success' : 'failure',
+              description: comment === '/answer yes' ? 'Answered yes' : 'Answered no'
             };
-
-            if (comment.includes('/answer yes')) {
-              status.state = 'success';
-              status.description = 'Answered yes';
-            } else if (comment.includes('/answer no')) {
-              status.state = 'failure';
-              status.description = 'Answered no';
-            } else {
-              return;
-            }
 
             await github.rest.repos.createCommitStatus(status);
