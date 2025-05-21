@@ -15,7 +15,7 @@ jobs:
     if: ${{ github.event.issue.pull_request != null }}
     steps:
       - name: Trigger only on `/answer` command
-        uses: actions-cool/pull-request-comment-trigger@v1.2.0
+        uses: actions-cool/pull-request-comment-trigger@v1
         with:
           trigger: '/answer'
           prefix_only: true
