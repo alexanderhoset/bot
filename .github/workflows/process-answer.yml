@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   process-answer:
-    if: github.event.issue.pull_request != null
+    if: ${{ github.event.issue.pull_request != null }}
     runs-on: ubuntu-latest
     steps:
       - name: Trigger only on `/answer` command
@@ -41,7 +41,7 @@ jobs:
         run: echo "SHA: ${{ steps.pr.outputs.result }}"
 
       - name: Set commit status (success)
-        if: github.event.comment.body == '/answer yes'
+        if: ${{ github.event.comment.body == '/answer yes' }}
         uses: ouzi-dev/commit-status@v2
         with:
           sha: ${{ steps.pr.outputs.result }}
@@ -50,7 +50,7 @@ jobs:
           description: Answered yes
 
       - name: Set commit status (failure)
-        if: github.event.comment.body == '/answer no'
+        if: ${{ github.event.comment.body == '/answer no' }}
         uses: ouzi-dev/commit-status@v2
         with:
           sha: ${{ steps.pr.outputs.result }}
