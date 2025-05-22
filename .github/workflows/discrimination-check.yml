@@ -57,8 +57,27 @@ jobs:
             } else if (answer === 'no') {
               state = 'failure';
               description = 'Rules were not followed';
-              
-              // Close the PR with a comment
+            }
+            
+            // Get the PR details since we're in a comment context
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            // Set the status first
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: pr.data.head.sha,
+              state: state,
+              context: 'discrimination-check',
+              description: description
+            });
+
+            // If answer is no, close the PR after setting status
+            if (answer === 'no') {
               await github.rest.pulls.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -73,20 +92,3 @@ jobs:
                 body: '🚫 This PR has been automatically closed because rules were not followed.'
               });
             }
-            
-            // Get the PR details since we're in a comment context
-            const pr = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number
-            });
-            
-            // Set the status
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: pr.data.head.sha,
-              state: state,
-              context: 'discrimination-check',
-              description: description
-            });
