@@ -14,7 +14,7 @@ jobs:
       statuses: write
 
     steps:
-      - name: Post Question and Set Initial  Status
+      - name: Set Initial Status
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
@@ -28,13 +28,18 @@ jobs:
               description: 'Waiting for reviewer response'
             });
 
+      - name: Post Question
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
               body: '### Code Review Question\nDid you follow the rules?\n\nPlease reply with `/answer yes` or `/answer no`'
             });
-
+            
       - name: Validate Answer Format
         if: github.event_name == 'issue_comment'
         id: validate
