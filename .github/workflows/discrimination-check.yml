@@ -1,0 +1,83 @@
+name: Discrimination Check
+
+on:
+  pull_request:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  discrimination-check:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      statuses: write
+
+    steps:
+      - name: Set Initial Pending Status
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d '{
+              "state": "pending",
+              "context": "discrimination-check",
+              "description": "Waiting for reviewer response"
+            }' \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }}"
+
+      - name: Post Initial Question
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '### Code Review Question\nDid you follow the rules?\n\nPlease reply with `/answer yes` or `/answer no`'
+            });
+
+      - name: Process Answer
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = context.payload.comment.body.trim().toLowerCase();
+            
+            // Only process comments that start with /answer
+            if (!comment.startsWith('/answer')) {
+              return;
+            }
+            
+            const answer = comment.replace('/answer', '').trim();
+            let state = 'error';
+            let description = 'Invalid response';
+            
+            if (answer === 'yes') {
+              state = 'success';
+              description = 'Rules were followed';
+            } else if (answer === 'no') {
+              state = 'failure';
+              description = 'Rules were not followed';
+            }
+            
+            // Get the PR details since we're in a comment context
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            // Set the status
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: pr.data.head.sha,
+              state: state,
+              context: 'discrimination-check',
+              description: description
+            });
