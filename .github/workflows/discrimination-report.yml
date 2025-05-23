@@ -33,20 +33,25 @@ jobs:
             report += '|------|--------|---------|---------|---------------------------|\n';
 
             for (const pr of prs.data) {
-              // Get PR checks
-              const checks = await github.rest.checks.listForRef({
+              // Get all statuses
+              const statuses = await github.rest.repos.listCommitStatusesForRef({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 ref: pr.head.sha
               });
 
-              // Find discrimination check status
+              // Find latest discrimination check status
               let discriminationCheckStatus = 'N/A';
-              const discriminationCheck = checks.data.check_runs.find(
-                check => check.name === 'discrimination-check'
-              );
-              if (discriminationCheck) {
-                discriminationCheckStatus = discriminationCheck.conclusion;
+              const discriminationStatuses = statuses.data
+                .filter(status => status.context === 'discrimination-check')
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+              if (discriminationStatuses.length > 0) {
+                const latestStatus = discriminationStatuses[0];
+                discriminationCheckStatus = latestStatus.state;
+                if (latestStatus.description) {
+                  discriminationCheckStatus += ` (${latestStatus.description})`;
+                }
               }
 
               // Get PR details including merger
