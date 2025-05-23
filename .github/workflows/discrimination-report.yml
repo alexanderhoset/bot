@@ -12,9 +12,6 @@ jobs:
       issues: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Generate PR Report
         uses: actions/github-script@v7
         with:
@@ -76,7 +73,7 @@ jobs:
               state: 'all'
             });
 
-            const reportTitle = 'PR Report - Updated Daily';
+            const reportTitle = 'Discrimination Report';
             const issueBody = report;
             const labels = ['pr-report'];
 
