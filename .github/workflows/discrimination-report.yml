@@ -1,4 +1,5 @@
-name: Discrimination Report Generator
+name: Discrimination  Report Generator
+
 on:
   workflow_dispatch:      # Allow manual trigger
 
@@ -25,7 +26,7 @@ jobs:
             });
 
             let report = '# Discrimination Report\n\n';
-            report += '| PR # | Title | Creator | Merger | Discrimination Check Status |\n';
+            report += '| PR # | Title | Creator | Status | Discrimination Check Status |\n';
             report += '|------|--------|---------|---------|---------------------------|\n';
 
             for (const pr of prs.data) {
@@ -50,18 +51,35 @@ jobs:
                 }
               }
 
-              // Get PR details including merger
-              let mergedBy = 'Not merged';
+              // Get PR details and determine closure status
+              let prStatus = 'Open';
               if (pr.merged_at) {
                 const prDetails = await github.rest.pulls.get({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   pull_number: pr.number
                 });
-                mergedBy = prDetails.data.merged_by ? prDetails.data.merged_by.login : 'Unknown';
+                prStatus = `Merged by ${prDetails.data.merged_by ? prDetails.data.merged_by.login : 'Unknown'}`;
+              } else if (pr.closed_at) {
+                // Check if it was closed by discrimination check
+                const comments = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number
+                });
+                
+                const discriminationClosure = comments.data.find(
+                  comment => comment.body.includes('🚫 This PR has been automatically closed because rules were not followed')
+                );
+                
+                if (discriminationClosure) {
+                  prStatus = 'Closed by Discrimination Check';
+                } else {
+                  prStatus = 'Closed manually';
+                }
               }
 
-              report += `| #${pr.number} | ${pr.title.replace(/\|/g, '\\|')} | ${pr.user.login} | ${mergedBy} | ${discriminationCheckStatus} |\n`;
+              report += `| #${pr.number} | ${pr.title.replace(/\|/g, '\\|')} | ${pr.user.login} | ${prStatus} | ${discriminationCheckStatus} |\n`;
             }
 
             // Get current date in YYYY-MM-DD format
