@@ -37,7 +37,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: '### Code Review Question\nDid you follow the rules?\n\nPlease reply with `/answer yes` or `/answer no`'
+              body: '### Code Review Question\nDid you follow the rules?\n\nPlease reply with:\n- `/answer yes` - Rules were followed\n- `/answer no` - Rules were not followed\n- `/answer n/a` - Rules do not apply to this PR'
             });
             
       - name: Validate Answer Format
@@ -74,6 +74,9 @@ jobs:
             } else if (answer === 'no') {
               state = 'failure';
               description = 'Rules were not followed';
+            } else if (answer === 'n/a') {
+              state = 'success';
+              description = 'Rules do not apply';
             }
             
             // Get the PR details
