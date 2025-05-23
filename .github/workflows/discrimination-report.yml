@@ -1,0 +1,95 @@
+name: Discrimination  Report Generator
+
+on:
+  workflow_dispatch:      # Allow manual trigger
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate PR Report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              sort: 'updated',
+              direction: 'desc',
+              per_page: 100
+            });
+
+            let report = '# Pull Request Report\n\n';
+            report += '| PR # | Title | Creator | Merger | Discrimination Check Status |\n';
+            report += '|------|--------|---------|---------|---------------------------|\n';
+
+            for (const pr of prs.data) {
+              // Get PR checks
+              const checks = await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: pr.head.sha
+              });
+
+              // Find discrimination check status
+              let discriminationCheckStatus = 'N/A';
+              const discriminationCheck = checks.data.check_runs.find(
+                check => check.name === 'discrimination-check'
+              );
+              if (discriminationCheck) {
+                discriminationCheckStatus = discriminationCheck.conclusion;
+              }
+
+              // Get PR details including merger
+              let mergedBy = 'Not merged';
+              if (pr.merged_at) {
+                const prDetails = await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number
+                });
+                mergedBy = prDetails.data.merged_by ? prDetails.data.merged_by.login : 'Unknown';
+              }
+
+              report += `| #${pr.number} | ${pr.title.replace(/\|/g, '\\|')} | ${pr.user.login} | ${mergedBy} | ${discriminationCheckStatus} |\n`;
+            }
+
+            // Create or update report issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['pr-report'],
+              state: 'all'
+            });
+
+            const reportTitle = 'PR Report - Updated Daily';
+            const issueBody = report;
+            const labels = ['pr-report'];
+
+            if (issues.data.length > 0) {
+              // Update existing report
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: issueBody
+              });
+            } else {
+              // Create new report
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: reportTitle,
+                body: issueBody,
+                labels: labels
+              });
+            } 
