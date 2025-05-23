@@ -1,5 +1,4 @@
-name: Discrimination  Report Generator
-
+name: Discrimination Report Generator
 on:
   workflow_dispatch:      # Allow manual trigger
 
@@ -26,8 +25,8 @@ jobs:
             });
 
             let report = '# Discrimination Report\n\n';
-            report += '| PR # | Title | Creator | Status | Discrimination Check Status |\n';
-            report += '|------|--------|---------|---------|---------------------------|\n';
+            report += '| PR # | Title | Creator | Merged | Status | Discrimination Check Status |\n';
+            report += '|------|--------|---------|---------|---------|---------------------------|\n';
 
             for (const pr of prs.data) {
               // Get all statuses
@@ -53,6 +52,7 @@ jobs:
 
               // Get PR details and determine closure status
               let prStatus = 'Open';
+              let mergedStatus = 'No';
               if (pr.merged_at) {
                 const prDetails = await github.rest.pulls.get({
                   owner: context.repo.owner,
@@ -60,7 +60,8 @@ jobs:
                   pull_number: pr.number
                 });
                 const mergeDate = new Date(pr.merged_at).toISOString().split('T')[0];
-                prStatus = `Merged by ${prDetails.data.merged_by ? prDetails.data.merged_by.login : 'Unknown'} on ${mergeDate}`;
+                mergedStatus = 'Yes';
+                prStatus = `by ${prDetails.data.merged_by ? prDetails.data.merged_by.login : 'Unknown'} on ${mergeDate}`;
               } else if (pr.closed_at) {
                 // Check if it was closed by discrimination check
                 const comments = await github.rest.issues.listComments({
@@ -81,7 +82,7 @@ jobs:
                 }
               }
 
-              report += `| #${pr.number} | ${pr.title.replace(/\|/g, '\\|')} | ${pr.user.login} | ${prStatus} | ${discriminationCheckStatus} |\n`;
+              report += `| #${pr.number} | ${pr.title.replace(/\|/g, '\\|')} | ${pr.user.login} | ${mergedStatus} | ${prStatus} | ${discriminationCheckStatus} |\n`;
             }
 
             // Get current date in YYYY-MM-DD format
