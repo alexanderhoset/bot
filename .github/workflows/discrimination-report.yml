@@ -1,5 +1,4 @@
-name: Discrimination  Report Generator
-
+name: Discrimination Report Generator
 on:
   workflow_dispatch:      # Allow manual trigger
 
@@ -25,7 +24,7 @@ jobs:
               per_page: 100
             });
 
-            let report = '# Pull Request Report\n\n';
+            let report = '# Discrimination Report\n\n';
             report += '| PR # | Title | Creator | Merger | Discrimination Check Status |\n';
             report += '|------|--------|---------|---------|---------------------------|\n';
 
@@ -65,33 +64,14 @@ jobs:
               report += `| #${pr.number} | ${pr.title.replace(/\|/g, '\\|')} | ${pr.user.login} | ${mergedBy} | ${discriminationCheckStatus} |\n`;
             }
 
-            // Create or update report issue
-            const issues = await github.rest.issues.listForRepo({
+            // Get current date in YYYY-MM-DD format
+            const date = new Date().toISOString().split('T')[0];
+            
+            // Create new report issue
+            await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              labels: ['pr-report'],
-              state: 'all'
-            });
-
-            const reportTitle = 'Discrimination Report';
-            const issueBody = report;
-            const labels = ['pr-report'];
-
-            if (issues.data.length > 0) {
-              // Update existing report
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issues.data[0].number,
-                body: issueBody
-              });
-            } else {
-              // Create new report
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: reportTitle,
-                body: issueBody,
-                labels: labels
-              });
-            } 
+              title: `Discrimination Report (${date})`,
+              body: report,
+              labels: ['pr-report']
+            }); 
