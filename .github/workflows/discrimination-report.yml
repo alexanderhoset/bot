@@ -59,7 +59,8 @@ jobs:
                   repo: context.repo.repo,
                   pull_number: pr.number
                 });
-                prStatus = `Merged by ${prDetails.data.merged_by ? prDetails.data.merged_by.login : 'Unknown'}`;
+                const mergeDate = new Date(pr.merged_at).toISOString().split('T')[0];
+                prStatus = `Merged by ${prDetails.data.merged_by ? prDetails.data.merged_by.login : 'Unknown'} on ${mergeDate}`;
               } else if (pr.closed_at) {
                 // Check if it was closed by discrimination check
                 const comments = await github.rest.issues.listComments({
@@ -72,10 +73,11 @@ jobs:
                   comment => comment.body.includes('🚫 This PR has been automatically closed because rules were not followed')
                 );
                 
+                const closeDate = new Date(pr.closed_at).toISOString().split('T')[0];
                 if (discriminationClosure) {
-                  prStatus = 'Closed by Discrimination Check';
+                  prStatus = `Closed by Discrimination Check on ${closeDate}`;
                 } else {
-                  prStatus = 'Closed manually';
+                  prStatus = `Closed manually on ${closeDate}`;
                 }
               }
 
